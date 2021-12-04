@@ -7,10 +7,6 @@ def grouper(iterable, n, fillvalue=None):
     return zip_longest(*args, fillvalue=fillvalue)
 
 
-testinput = [l.strip() for l in open("Day4/Day4testinput.txt")]
-# realinput = [l.strip() for l in open("Day4Input.txt")]
-
-
 def columns(board):
     for i in range(len(board[0])):
         yield [row[i] for row in board]
@@ -46,11 +42,10 @@ class Input:
                         if move == self.boards[b][i][j]:
                             self.plays[b][i][j] = True
 
-            for b in range(len(self.boards)):
-                if board_wins(self.plays[b]):
-                    self.wins.add(b)
-                    if len(self.wins) == wincount:
-                        return b, int(move)
+                            if board_wins(self.plays[b]):
+                                self.wins.add(b)
+                                if len(self.wins) == wincount:
+                                    return b, int(move)
 
     def score(self, b):
         score = 0
