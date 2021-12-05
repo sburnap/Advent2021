@@ -12,7 +12,7 @@ def parse_line(s: str) -> VentDef:
     if m := re_inputline.match(s):
         return ((int(m.group(1)), int(m.group(2))), (int(m.group(3)), int(m.group(4))))
 
-    raise Exception(f"You're input is crap: '{s}'")
+    raise Exception(f"Your input is crap: '{s}'")
 
 
 def read_vents(filename: str) -> Tuple[VentDef, ...]:
@@ -51,6 +51,7 @@ def walk(
 
 def find_counts(vents: Tuple[VentDef, ...], follow_diagonals: bool) -> Counter:
     cnts: Counter = Counter()
+
     for (xstart, ystart), (xfinish, yfinish) in vents:
 
         xstep = direction(xfinish - xstart)
