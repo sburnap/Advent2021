@@ -1,5 +1,5 @@
 from itertools import zip_longest
-from os import stat
+import operator
 
 # From itertools docs
 def grouper(iterable, n, fillvalue=None):
@@ -13,7 +13,7 @@ def columns(board):
         yield [row[i] for row in board]
 
 
-class Input:
+class Bingo:
     def __init__(self, inputfile):
         lines = [l.strip() for l in open(inputfile)]
         self.moves = lines[0].split(",")
@@ -38,25 +38,22 @@ class Input:
                     board[i][j] = 0
                     break
 
-    def play(self):
+    def play_to_bingo(self):
         for move in self.moves:
-            for b in range(len(self.boards)):
+            for b, board in enumerate(self.boards):
                 if b not in self.wins:
-                    self.play_on_board(move, self.boards[b])
-                    if self.board_wins(self.boards[b]):
+                    self.play_on_board(move, board)
+                    if self.board_wins(board):
                         self.wins.add(b)
-                        yield (b, int(move))
+                        yield int(move) * self.score(board)
 
-    def score(self, b):
-        return sum(int(s) for s in sum(self.boards[b], []))
+    @staticmethod
+    def score(board):
+        return sum(int(s) for s in sum(board, []))
 
 
 def run_bingo(infile, order):
-    input = Input(infile)
-    plays = [play for play in input.play()]
-    winner, move = plays[order]
-    score = input.score(winner)
-    return move * score
+    return list(Bingo(infile).play_to_bingo())[order]
 
 
 def day_one(infile):
