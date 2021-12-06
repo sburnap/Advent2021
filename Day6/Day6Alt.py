@@ -8,6 +8,7 @@ realinput: Counter = Counter(
 
 
 def breed(counts: List[int]) -> List[int]:
+    #      |  0 .. 5   |            6            |      7      |      8
     return counts[1:7] + [counts[7] + counts[0]] + [counts[8]] + [counts[0]]
 
 
