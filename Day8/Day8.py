@@ -22,8 +22,13 @@ def find_digits(l: List[str]):
     cnts = Counter()
     for digit in all:
         cnts.update(digit)
+        if (len(digit)) == 2:
+            one = digit
+        elif (len(digit)) == 3:
+            seven = digit
+        elif (len(digit)) == 4:
+            four = digit
 
-    # Utterly relies on all ten digits appearing in a line
     spots = {}
     for ch in cnts:
         if cnts[ch] == 6:
@@ -33,30 +38,14 @@ def find_digits(l: List[str]):
         elif cnts[ch] == 9:
             spots["f"] = ch
 
-    for digit in all:
-        if len(digit) == 2:  # c + f  -> c unknown
-            spots["c"] = next(ch for ch in digit if ch != spots["f"])
-            break
-
-    for digit in all:
-        if len(digit) == 3:  # a + c + f -> a unknown
-            spots["a"] = next(ch for ch in digit if ch not in (spots["c"], spots["f"]))
-            break
-
-    for digit in all:
-        if len(digit) == 4:  # b + c + d + f -> d unknown
-            spots["d"] = next(
-                ch for ch in digit if ch not in (spots["b"], spots["c"], spots["f"])
-            )
-            break
+    spots["c"] = next(ch for ch in one if ch != spots["f"])
+    spots["a"] = next(ch for ch in seven if ch not in (spots["c"], spots["f"]))
+    spots["d"] = next(
+        ch for ch in four if ch not in (spots["b"], spots["c"], spots["f"])
+    )
 
     # g only unknown left
-    spots["g"] = next(
-        ch
-        for ch in "abcdefg"
-        if ch
-        not in [spots["a"], spots["b"], spots["c"], spots["d"], spots["e"], spots["f"]]
-    )
+    spots["g"] = next(ch for ch in "abcdefg" if ch not in spots.values())
 
     dig_defs = {
         0: "abcefg",
@@ -74,21 +63,21 @@ def find_digits(l: List[str]):
     return {"".join(sorted([spots[ch] for ch in dig_defs[i]])): i for i in range(10)}
 
 
+def decode_number(digit_map, line):
+    return int(
+        "".join(
+            [str(digit_map[sdig]) for sdig in ["".join(sorted(dig)) for dig in line]]
+        )
+    )
+
+
 def part_two(filename):
     inp = list(
         (a.split(" "), b.split(" "))
         for a, b in (l.strip().split(" | ") for l in open(filename))
     )
 
-    s = 0
-    for i, o in inp:
-        calcs = find_digits(i + o)
-
-        s += int(
-            "".join([str(calcs[sdig]) for sdig in ["".join(sorted(dig)) for dig in o]])
-        )
-
-    return s
+    return sum([decode_number(find_digits(i), o) for i, o in inp])
 
 
 if __name__ == "__main__":
