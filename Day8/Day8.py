@@ -34,19 +34,23 @@ def find_digits(l: List[str]):
             spots["f"] = ch
 
     for digit in all:
-        if len(digit) == 2:
+        if len(digit) == 2:  # c + f  -> c unknown
             spots["c"] = next(ch for ch in digit if ch != spots["f"])
+            break
 
     for digit in all:
-        if len(digit) == 3:
+        if len(digit) == 3:  # a + c + f -> a unknown
             spots["a"] = next(ch for ch in digit if ch not in (spots["c"], spots["f"]))
+            break
 
     for digit in all:
-        if len(digit) == 4:
+        if len(digit) == 4:  # b + c + d + f -> d unknown
             spots["d"] = next(
                 ch for ch in digit if ch not in (spots["b"], spots["c"], spots["f"])
             )
+            break
 
+    # g only unknown left
     spots["g"] = next(
         ch
         for ch in "abcdefg"
