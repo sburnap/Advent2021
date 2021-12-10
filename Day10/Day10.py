@@ -3,6 +3,10 @@ from statistics import median
 
 
 def match(line: str) -> Union[str, List[str]]:
+    """
+    Kinda hacky: return the bad character on corrupted,
+    the list of things to match on incomplete
+    """
 
     stack = []
     matching = {"(": ")", "[": "]", "{": "}", "<": ">"}
@@ -27,7 +31,7 @@ def part_one(filename: str) -> int:
 
 
 def score_completion(results: List[str]) -> int:
-    score = {"(": 1, "[": 2, "{": 3, "<": 4, None: 0}
+    score = {"(": 1, "[": 2, "{": 3, "<": 4}
 
     rc = 0
     for ch in results:
