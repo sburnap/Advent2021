@@ -4,8 +4,6 @@ from functools import reduce
 from itertools import product
 import operator
 
-testinput = [l.strip() for l in open("Day9/Day9TestInput.txt")]
-
 
 def get_height(floormap: List[str], x: int, y: int) -> int:
     if x < 0 or y < 0 or x >= len(floormap[0]) or y >= len(floormap):
