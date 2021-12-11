@@ -22,8 +22,13 @@ def read_input(filename: str) -> List[List[int]]:
     return [[int(ch) for ch in line] for line in [l.strip() for l in open(filename)]]
 
 
-def iterate_x_y(two_d) -> Generator[Tuple[int, int], None, None]:
+def iterate_x_y(two_d: List[List[int]]) -> Generator[Tuple[int, int], None, None]:
     return ((x, y) for x, y in product(range(len(two_d)), range(len(two_d[0]))))
+
+
+def inbounds(two_d: List[List[int]], x, y):
+
+    return x >= 0 and y >= 0 and y < len(two_d) and x < len(two_d[0])
 
 
 def check_for_flash(octopi: List[List[int]], x: int, y: int):
@@ -32,13 +37,7 @@ def check_for_flash(octopi: List[List[int]], x: int, y: int):
         octopi[y][x] = 0
 
         for x, y in adjacent(x, y):
-            if (
-                x >= 0
-                and y >= 0
-                and y < len(octopi)
-                and x < len(octopi[0])
-                and octopi[y][x] != 0
-            ):
+            if inbounds(octopi, x, y) and octopi[y][x] != 0:
                 octopi[y][x] += 1
                 check_for_flash(octopi, x, y)
 
