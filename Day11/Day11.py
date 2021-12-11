@@ -1,31 +1,32 @@
-from typing import Generator, Tuple
+from typing import Generator, Tuple, List
 from itertools import product
 
 
-def adjacent(x: int, y: int) -> Generator[Tuple[int, int], None, None]:
-    yield (x - 1, y + 1)
+def adjacent(
+    x: int, y: int, use_diagonals: bool = True
+) -> Generator[Tuple[int, int], None, None]:
     yield (x - 1, y)
-    yield (x - 1, y - 1)
-
     yield (x, y - 1)
     yield (x, y + 1)
-
-    yield (x + 1, y + 1)
     yield (x + 1, y)
-    yield (x + 1, y - 1)
+
+    if use_diagonals:
+        yield (x + 1, y + 1)
+        yield (x + 1, y - 1)
+        yield (x - 1, y + 1)
+        yield (x - 1, y - 1)
 
 
-def read_input(filename: str):
+def read_input(filename: str) -> List[List[int]]:
 
     return [[int(ch) for ch in line] for line in [l.strip() for l in open(filename)]]
 
 
-def iterate_x_y(two_d):
-    for x, y in product(range(len(two_d)), range(len(two_d[0]))):
-        yield x, y
+def iterate_x_y(two_d) -> Generator[Tuple[int, int], None, None]:
+    return ((x, y) for x, y in product(range(len(two_d)), range(len(two_d[0]))))
 
 
-def check_for_flash(octopi, x, y):
+def check_for_flash(octopi: List[List[int]], x: int, y: int) -> int:
     flashes = 0
 
     if octopi[y][x] > 9:
@@ -41,16 +42,11 @@ def check_for_flash(octopi, x, y):
     return flashes
 
 
-def do_step(octopi):
+def do_step(octopi: List[List[int]]) -> int:
     for x, y in iterate_x_y(octopi):
         octopi[y][x] += 1
 
-    flashes = 0
-
-    for x, y in iterate_x_y(octopi):
-        flashes += check_for_flash(octopi, x, y)
-
-    return flashes
+    return sum(check_for_flash(octopi, x, y) for x, y in iterate_x_y(octopi))
 
 
 def part_one(filename: str, steps) -> int:
