@@ -1,5 +1,5 @@
 from typing import Generator, Tuple, List
-from itertools import product
+from itertools import product, islice
 
 
 def adjacent(
@@ -26,45 +26,45 @@ def iterate_x_y(two_d) -> Generator[Tuple[int, int], None, None]:
     return ((x, y) for x, y in product(range(len(two_d)), range(len(two_d[0]))))
 
 
-def check_for_flash(octopi: List[List[int]], x: int, y: int) -> int:
-    flashes = 0
+def check_for_flash(octopi: List[List[int]], x: int, y: int):
 
     if octopi[y][x] > 9:
         octopi[y][x] = 0
-        flashes += 1
 
         for x, y in adjacent(x, y):
-            if x >= 0 and y >= 0 and y < len(octopi) and x < len(octopi[0]):
-                if octopi[y][x] != 0:
-                    octopi[y][x] += 1
-                    flashes += check_for_flash(octopi, x, y)
-
-    return flashes
+            if (
+                x >= 0
+                and y >= 0
+                and y < len(octopi)
+                and x < len(octopi[0])
+                and octopi[y][x] != 0
+            ):
+                octopi[y][x] += 1
+                check_for_flash(octopi, x, y)
 
 
 def do_step(octopi: List[List[int]]) -> int:
     for x, y in iterate_x_y(octopi):
         octopi[y][x] += 1
 
-    return sum(check_for_flash(octopi, x, y) for x, y in iterate_x_y(octopi))
+    for x, y in iterate_x_y(octopi):
+        check_for_flash(octopi, x, y)
+
+    return len([(x, y) for x, y in iterate_x_y(octopi) if octopi[y][x] == 0])
+
+
+def step_gen(octopi) -> Generator[int, None, None]:
+    while (flashes := do_step(octopi)) < len(octopi) * len(octopi[0]):
+        yield flashes
+    yield flashes
 
 
 def part_one(filename: str, steps) -> int:
-    octopi = read_input(filename)
-
-    return sum(do_step(octopi) for i in range(steps))
+    return sum(islice(step_gen(read_input(filename)), steps))
 
 
 def part_two(filename: str) -> int:
-    octopi = read_input(filename)
-
-    flashes = 0
-    steps = 0
-    while flashes < len(octopi) * len(octopi[0]):
-        flashes = do_step(octopi)
-        steps += 1
-
-    return steps
+    return len(tuple(step_gen(read_input(filename))))
 
 
 if __name__ == "__main__":
