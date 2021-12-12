@@ -23,11 +23,15 @@ def eval_good_one(path: List[str], next: str) -> bool:
 
 
 def eval_good_two(path: List[str], next) -> bool:
+
+    if next not in path:
+        return True
+
     if next.isupper():
         return True
 
     lowers = tuple(node for node in path if node.islower())
-    return len(set(lowers)) == len(lowers) or next not in lowers
+    return len(set(lowers)) == len(lowers)
 
 
 def get_paths(
