@@ -1,6 +1,8 @@
-from typing import Generator, List, Dict
+import functools
+from typing import Generator, List, Dict, Tuple
 import re
-from collections import defaultdict, Counter
+from collections import defaultdict
+from functools import lru_cache
 
 re_line = re.compile(r"^([a-zA-Z]*)-([a-zA-Z]*)$")
 
@@ -18,11 +20,17 @@ def read_input(filename: str) -> Dict[str, List[str]]:
     return out
 
 
-def eval_good_one(path: List[str], next: str) -> bool:
+def eval_good_one(path: Tuple[str], next: str) -> bool:
     return next.isupper() or next not in path
 
 
-def eval_good_two(path: List[str], next) -> bool:
+@functools.lru_cache
+def check_lowers(path: Tuple[str]) -> bool:
+    lowers = tuple(node for node in path if node.islower())
+    return len(set(lowers)) == len(lowers)
+
+
+def eval_good_two(path: Tuple[str], next) -> bool:
 
     if next not in path:
         return True
@@ -30,25 +38,24 @@ def eval_good_two(path: List[str], next) -> bool:
     if next.isupper():
         return True
 
-    lowers = tuple(node for node in path if node.islower())
-    return len(set(lowers)) == len(lowers)
+    return check_lowers(path)
 
 
 def get_paths(
     graph: Dict[str, List[str]],
     eval_good,
-) -> Generator[List[str], None, None]:
+) -> Generator[Tuple[str], None, None]:
 
-    paths = [["start"]]
+    paths = [("start",)]
 
     while len(paths) > 0:
         path = paths.pop()
         for next in graph[path[-1]]:
             if next != "start":
                 if next == "end":
-                    yield path + [next]
+                    yield path + (next,)
                 elif eval_good(path, next):
-                    paths.append(path + [next])
+                    paths.append(path + (next,))
 
 
 def part_one(filename: str) -> int:
