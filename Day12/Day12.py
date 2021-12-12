@@ -18,16 +18,16 @@ def read_input(filename: str) -> Dict[str, List[str]]:
     return out
 
 
-def eval_good_one(path: List[str]) -> bool:
-    return path[-1].isupper() or path[-1] not in path[:-1]
+def eval_good_one(path: List[str], next: str) -> bool:
+    return next.isupper() or next not in path
 
 
-def eval_good_two(path: List[str]) -> bool:
-    if path[-1].isupper():
+def eval_good_two(path: List[str], next) -> bool:
+    if next.isupper():
         return True
 
     lowers = tuple(node for node in path if node.islower())
-    return len(set(lowers)) + 1 >= len(lowers)
+    return len(set(lowers)) == len(lowers) or next not in lowers
 
 
 def get_paths(
@@ -41,11 +41,10 @@ def get_paths(
         path = paths.pop()
         for next in graph[path[-1]]:
             if next != "start":
-                newpath = path + [next]
                 if next == "end":
-                    yield newpath
-                elif eval_good(newpath):
-                    paths.append(newpath)
+                    yield path + [next]
+                elif eval_good(path, next):
+                    paths.append(path + [next])
 
 
 def part_one(filename: str) -> int:
