@@ -23,7 +23,7 @@ def read_input(filename: str) -> List[List[int]]:
 
 
 def iterate_x_y(two_d: List[List[int]]) -> Generator[Tuple[int, int], None, None]:
-    return ((x, y) for x, y in product(range(len(two_d)), range(len(two_d[0]))))
+    return ((x, y) for y, x in product(range(len(two_d)), range(len(two_d[0]))))
 
 
 def inbounds(two_d: List[List[int]], x, y):
