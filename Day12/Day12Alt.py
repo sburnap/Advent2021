@@ -1,5 +1,5 @@
 import functools
-from typing import Generator, List, Dict, Tuple
+from typing import Generator, List, Dict, Tuple, Generic, TypeVar
 import re
 from collections import defaultdict
 from functools import lru_cache
@@ -27,13 +27,23 @@ class Path:
         self.nodes: Tuple[str, ...] = nodes
         self.small_twice: bool = small_twice
 
-    def add(self, node: str) -> None:
+    def add(self, node: str) -> "Path":
         if not self.small_twice and node.islower() and node in self.nodes:
             self.small_twice = True
         self.nodes = self.nodes + (node,)
+        return self
 
     def can_add(self, node: str):
         return not self.small_twice or node.isupper() or node not in self.nodes
+
+
+T = TypeVar("T")
+
+
+def stacker(paths: List[T]) -> Generator[T, None, None]:
+
+    while paths:
+        yield paths.pop()
 
 
 def get_paths(
@@ -43,16 +53,12 @@ def get_paths(
 
     paths: List[Path] = [Path(("start",), small_twice)]
 
-    while len(paths) > 0:
-        path = paths.pop()
+    for path in stacker(paths):
         for next in graph[path.nodes[-1]]:
             if next == "end":
                 yield path.nodes
-            else:
-                if path.can_add(next):
-                    newpath = Path(path.nodes, path.small_twice)
-                    newpath.add(next)
-                    paths.append(newpath)
+            elif path.can_add(next):
+                paths.append(Path(path.nodes, path.small_twice).add(next))
 
 
 def part_one(filename: str) -> int:
