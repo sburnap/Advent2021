@@ -33,7 +33,7 @@ class Path:
         self.nodes = self.nodes + [node]
 
     def can_add(self, node: str):
-        return node.isupper() or not self.small_twice or node not in self.nodes
+        return not self.small_twice or node.isupper() or node not in self.nodes
 
 
 def get_paths(
@@ -49,8 +49,8 @@ def get_paths(
             if next == "end":
                 yield path.nodes
             else:
-                newpath = Path(path.nodes, path.small_twice)
-                if newpath.can_add(next):
+                if path.can_add(next):
+                    newpath = Path(path.nodes, path.small_twice)
                     newpath.add(next)
                     paths.append(newpath)
 
