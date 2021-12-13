@@ -23,14 +23,14 @@ def read_input(filename: str) -> Dict[str, List[str]]:
 
 
 class Path:
-    def __init__(self, nodes: List[str], small_twice: bool) -> None:
-        self.nodes = nodes
-        self.small_twice = small_twice
+    def __init__(self, nodes: Tuple[str, ...], small_twice: bool) -> None:
+        self.nodes: Tuple[str, ...] = nodes
+        self.small_twice: bool = small_twice
 
-    def add(self, node: str) -> bool:
+    def add(self, node: str) -> None:
         if not self.small_twice and node.islower() and node in self.nodes:
             self.small_twice = True
-        self.nodes = self.nodes + [node]
+        self.nodes = self.nodes + (node,)
 
     def can_add(self, node: str):
         return not self.small_twice or node.isupper() or node not in self.nodes
@@ -41,7 +41,7 @@ def get_paths(
     small_twice,
 ) -> Generator[Tuple[str, ...], None, None]:
 
-    paths: List[Path] = [Path(["start"], small_twice)]
+    paths: List[Path] = [Path(("start",), small_twice)]
 
     while len(paths) > 0:
         path = paths.pop()
