@@ -71,14 +71,12 @@ def fold(paper, folds, only_once: bool):
 
 
 def part_one(filename: str) -> int:
-    paper, folds = read_input(filename)
-    paper = fold(paper, folds, True)
+    paper = fold(*read_input(filename), only_once=True)
     return sum(len([spot for spot in row if spot == "#"]) for row in paper)
 
 
 def part_two(filename: str) -> int:
-    paper, folds = read_input(filename)
-    paper = fold(paper, folds, False)
+    paper = fold(*read_input(filename), only_once=False)
     print_paper(paper)
 
 
