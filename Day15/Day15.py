@@ -1,10 +1,7 @@
 from typing import Tuple, List, Generator
 from itertools import product
-
-
-def print_map(cavemap: List[List[int]]) -> None:
-    for y in cavemap:
-        print("".join([str(r) for r in y]))
+from copy import deepcopy
+from heapq import heappush, heappop, heapify
 
 
 def get_map(filename: str) -> List[List[int]]:
@@ -30,40 +27,48 @@ def get_bigmap(filename: str) -> List[List[int]]:
     return bigmap
 
 
-def print_path(floormap, path):
-    print(f"{path}: {risk(floormap, path)} -> {[floormap[y][x] for x,y in path]}")
-
-
-def before(x: int, y: int) -> Generator[Tuple[int, int], None, None]:
+def adjacent(
+    x: int, y: int, maxx: int, maxy: int
+) -> Generator[Tuple[int, int], None, None]:
     if x > 0:
         yield (x - 1, y)
     if y > 0:
         yield (x, y - 1)
-
-
-def iterate_x_y(two_d: List[List[int]]) -> Generator[Tuple[int, int], None, None]:
-    return ((x, y) for y, x in product(range(len(two_d)), range(len(two_d[0]))))
+    if x < maxx:
+        yield (x + 1, y)
+    if y < maxy:
+        yield (x, y + 1)
 
 
 def dijkstra(floormap: List[List[str]]) -> int:
 
-    for x, y in iterate_x_y(floormap):
-        if x > 0 or y > 0:
-            floormap[y][x] += min([floormap[y][x] for x, y in before(x, y)])
+    distances = deepcopy(floormap)
+    for y in range(len(distances)):
+        for x in range(len(distances[0])):
+            distances[y][x] = None
 
-    return floormap[-1][-1] - floormap[0][0]
+    distances[0][0] = floormap[0][0]
+    stack = []
+    heapify(stack)
+    heappush(stack, (distances[0][0], 0, 0))
+    while True:
+        risk, x1, y1 = heappop(stack)
+
+        for x, y in adjacent(x1, y1, len(distances[0]) - 1, len(distances) - 1):
+            if not distances[y][x]:
+                distances[y][x] = floormap[y][x] + distances[y1][x1]
+                heappush(stack, (distances[y][x], x, y))
+
+        if distances[-1][-1]:
+            return distances[-1][-1] - distances[0][0]
 
 
 def day_one(filename: str) -> int:
-    floormap = get_map(filename)
-
-    return dijkstra(floormap)
+    return dijkstra(get_map(filename))
 
 
 def day_two(filename: str) -> int:
-    floormap = get_bigmap(filename)
-    # print_map(floormap)
-    return dijkstra(floormap)
+    return dijkstra(get_bigmap(filename))
 
 
 if __name__ == "__main__":
