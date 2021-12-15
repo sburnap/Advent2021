@@ -1,6 +1,4 @@
-from typing import Tuple, List, Generator, Union
-from itertools import product
-from copy import deepcopy
+from typing import Tuple, List, Generator, Optional, Any
 from heapq import heappush, heappop, heapify
 
 
@@ -40,31 +38,29 @@ def adjacent(
         yield (x, y + 1)
 
 
-# Python's heap is ugly
+# Python's heap is ugly.  Python's priorityqueue is slow
 class PriorityQueue:
     def __init__(self):
-        self.__data = []
+        self.__data: List[Any] = []
         heapify(self.__data)
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return True if self.__data else False
 
-    def pop(self):
+    def pop(self) -> Any:
         return heappop(self.__data)
 
-    def push(self, val):
-        return heappush(self.__data, val)
-
-
-def its_an_int(x: Union[int, None]) -> int:
-    return x if x else 0
+    def push(self, val: Any):
+        heappush(self.__data, val)
 
 
 def dijkstra(floormap: List[List[int]]) -> int:
 
-    distances: List[List[Union[int, None]]] = [
+    distances: List[List[Optional[int]]] = [
         [None for _ in range(len(floormap[0]))] for _ in range(len(floormap))
     ]
+
+    maxx, maxy = len(distances[0]) - 1, len(distances) - 1
 
     distances[0][0] = floormap[0][0]
     queue = PriorityQueue()
@@ -72,13 +68,13 @@ def dijkstra(floormap: List[List[int]]) -> int:
     while queue:
         _, x1, y1 = queue.pop()
 
-        for x, y in adjacent(x1, y1, len(distances[0]) - 1, len(distances) - 1):
+        for x, y in adjacent(x1, y1, maxx, maxy):
             if not distances[y][x]:
                 distances[y][x] = floormap[y][x] + distances[y1][x1]
                 queue.push((distances[y][x], x, y))
 
-        if distances[-1][-1]:
-            return its_an_int(distances[-1][-1]) - its_an_int(distances[0][0])
+        if (end := distances[-1][-1]) and (start := distances[0][0]):
+            return end - start
 
     raise Exception("Should never happen")
 
