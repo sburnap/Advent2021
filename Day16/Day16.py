@@ -1,6 +1,14 @@
 from typing import Tuple, Dict, Any, List
 
-testinput1 = "38006F4529120"
+testinput = [
+    "D2FE28",
+    "38006F45291200",
+    "EE00D40C823060",
+    "8A004A801A8002F478",
+    "620080001611562C8802118E34",
+    "C0015000016115A2E0802F182340",
+    "A0016C880162017C3686B18A3D4780",
+]
 
 
 def parse_version(binary: str) -> Tuple[int, str]:
@@ -106,29 +114,21 @@ def print_packet(results, tabs=0):
             print_packet(packet, tabs + 1)
 
 
-def test_one(filename: str) -> int:
-    testinput = [line.strip() for line in open(filename)]
-    for hexdata in testinput:
-        parsed, _ = parse_component(bin(int(hexdata, 16))[2:].zfill(len(hexdata * 4)))
-        # print(hexdata, bin(int(hexdata, 16)))
-        # print_packet(parsed)
-        # print(version_sum(parsed))
-    return 0
-
-
-def day_one(filename: str) -> int:
-    testinput = [line.strip() for line in open(filename)]
-    hexdata = testinput[0]
-    parsed, _ = parse_component(bin(int(hexdata, 16))[2:].zfill(len(hexdata * 4)))
-    print_packet(parsed)
+def part_one(inp: str, display: bool) -> int:
+    parsed, _ = parse_component(bin(int(inp, 16))[2:].zfill(len(inp * 4)))
+    if display:
+        print_packet(parsed)
     return version_sum(parsed)
 
 
 if __name__ == "__main__":
 
     print("A:")
-    print(f"Testinput value is {test_one('Day16/Day16Testinput.txt')}")
-    print(f"Realinput value is {day_one('Day16/Day16Input.txt')}")
+    for line in testinput:
+        print(f"Testinput value is {part_one(line, True)}")
+    print(
+        f"Realinput value is {part_one(next(line.strip() for line in open('Day16/Day16Input.txt')), False)}"
+    )
 
     print("B:")
     # print(f"Testinput value is {day_two('Day16/Day16TestInput.txt')}")
