@@ -41,7 +41,7 @@ def adjacent(
 # Python's heap is ugly.  Python's priorityqueue is slow
 class PriorityQueue:
     def __init__(self):
-        self.__data: List[Any] = []
+        self.__data = []
         heapify(self.__data)
 
     def __bool__(self) -> bool:
