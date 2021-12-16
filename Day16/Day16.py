@@ -1,4 +1,4 @@
-from typing import Tuple, Dict, Any, List
+from typing import Tuple, Dict, Any, List, TypeVar
 import operator
 from functools import reduce
 
@@ -23,16 +23,19 @@ testinput2 = [
     "9C0141080250320F1802104A08",
 ]
 
+SingleResult = Tuple[int, str]
+Component = Dict[str, Any]
 
-def parse_version(binary: str) -> Tuple[int, str]:
+
+def parse_version(binary: str) -> SingleResult:
     return int(binary[:3], 2), binary[3:]
 
 
-def parse_typeid(binary: str) -> Tuple[int, str]:
+def parse_typeid(binary: str) -> SingleResult:
     return int(binary[:3], 2), binary[3:]
 
 
-def parse_literal(binary: str) -> Tuple[int, str]:
+def parse_literal(binary: str) -> SingleResult:
     literal = ""
     endval = False
     while not endval:
@@ -42,25 +45,26 @@ def parse_literal(binary: str) -> Tuple[int, str]:
     return int(literal, 2), binary
 
 
-def parse_mode(binary: str) -> Tuple[int, str]:
+def parse_mode(binary: str) -> SingleResult:
     return int(binary[:1], 2), binary[1:]
 
 
-def parse_length(binary: str) -> Tuple[int, str]:
+def parse_length(binary: str) -> SingleResult:
     return int(binary[:15], 2), binary[15:]
 
 
-def parse_number(binary: str) -> Tuple[int, str]:
+def parse_number(binary: str) -> SingleResult:
     return int(binary[:11], 2), binary[11:]
 
 
-def parse_component(binary: str) -> Tuple[Dict[str, Any], str]:
+def parse_component(binary: str) -> Tuple[Component, str]:
     opcodes = ["+", "*", "min", "max", "LIT", ">", "<", "="]
-    results = {}
+    results: Component = {}
 
     results["version"], binary = parse_version(binary)
     typeid, binary = parse_version(binary)
     results["opcode"] = opcodes[typeid]
+
     if results["opcode"] == "LIT":
         results["literal"], binary = parse_literal(binary)
     else:
@@ -82,9 +86,10 @@ def parse_component(binary: str) -> Tuple[Dict[str, Any], str]:
     return results, binary
 
 
-def parse_components_by_length(binary: str, length: int) -> List[Any]:
+def parse_components_by_length(binary: str, length: int) -> Tuple[List[Component], str]:
+
     to_parse = binary[:length]
-    results = []
+    results: List[Component] = []
     while len(to_parse) > 0:
         result, to_parse = parse_component(to_parse)
         results.append(result)
@@ -92,8 +97,9 @@ def parse_components_by_length(binary: str, length: int) -> List[Any]:
     return results, binary[length:]
 
 
-def parse_components_by_number(binary: str, number: int) -> List[Any]:
-    results = []
+def parse_components_by_number(binary: str, number: int) -> Tuple[List[Component], str]:
+
+    results: List[Component] = []
     for i in range(number):
         result, binary = parse_component(binary)
         results.append(result)
@@ -101,7 +107,7 @@ def parse_components_by_number(binary: str, number: int) -> List[Any]:
     return results, binary
 
 
-def version_sum(results: Dict[str, Any]) -> int:
+def version_sum(results: Component) -> int:
     if "packets" in results:
         return results["version"] + sum(
             version_sum(subpacket) for subpacket in results["packets"]
@@ -129,7 +135,7 @@ def print_packet(results, tabs=0):
             print_packet(packet, tabs + 1)
 
 
-def calculate(results: Dict[str, Any]) -> int:
+def calculate(results: Component) -> int:
 
     opcode = results["opcode"]
 
@@ -153,6 +159,8 @@ def calculate(results: Dict[str, Any]) -> int:
     elif opcode == "=":
         return 1 if data[0] == data[1] else 0
 
+    raise Exception(f"Bad opcode {opcode}")
+
 
 def part_one(inp: str, display: bool) -> int:
     parsed, _ = parse_component(bin(int(inp, 16))[2:].zfill(len(inp * 4)))
@@ -172,7 +180,7 @@ if __name__ == "__main__":
 
     print("A:")
     for line in testinput1:
-        print(f"Testinput value is {part_one(line, False)}")
+        print(f"Testinput value {line} is {part_one(line, False)}")
     print(
         f"Realinput value is {part_one(next(line.strip() for line in open('Day16/Day16Input.txt')), False)}"
     )
