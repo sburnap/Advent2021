@@ -1,4 +1,4 @@
-from typing import Tuple, Generator, List
+from typing import Tuple, Generator, List, Set, Optional
 
 testinput: Tuple[Tuple[int, int], Tuple[int, int]] = ((20, 30), (-10, -5))
 realinput: Tuple[Tuple[int, int], Tuple[int, int]] = ((155, 182), (-117, -67))
@@ -6,7 +6,7 @@ realinput: Tuple[Tuple[int, int], Tuple[int, int]] = ((155, 182), (-117, -67))
 
 def positionx(
     position: int, velocity: int, minimum: int, maximum: int
-) -> Generator[int, None, None]:
+) -> Generator[Tuple[int, int], None, None]:
     step = 0
     while velocity > 0 and position <= maximum:
         position += velocity
@@ -18,7 +18,7 @@ def positionx(
 
 def positiony(
     position: int, velocity: int, minimum: int, maximum: int
-) -> Generator[int, None, None]:
+) -> Generator[Tuple[int, int], None, None]:
     step = 0
     while position >= minimum:
         position += velocity
@@ -28,7 +28,7 @@ def positiony(
         step += 1
 
 
-def run(vx: int, vy: int, targetx: int, targety: int) -> int:
+def run(vx: int, vy: int, targetx: Set[int], targety: Set[int]) -> Optional[int]:
     x = y = 0
     maxheight = 0
     while y >= min(targety):
@@ -47,12 +47,19 @@ def run(vx: int, vy: int, targetx: int, targety: int) -> int:
     return None
 
 
-def get_heights(targetx, targety, minvx, minvy, maxvx, maxvy) -> List[int]:
-    heights = []
+def get_heights(
+    targetx: Set[int],
+    targety: Set[int],
+    minvx: int,
+    minvy: int,
+    maxvx: int,
+    maxvy: int,
+) -> List[int]:
+    heights: List[int] = []
     for vx in range(minvx, maxvx):
         for vy in range(minvy, maxvy):
             if (height := run(vx, vy, targetx, targety)) != None:
-                heights.append(height)
+                heights.append(height if height else 0)
 
     return heights
 
