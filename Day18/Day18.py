@@ -1,110 +1,57 @@
 from typing import List, Any, Tuple, Union, Generator
 import re
+from functools import reduce
 
 re_pair = re.compile(r"^\[(\d+),(\d+)\]")
-
-re_digit = re.compile(r"(\[|,)(\d+)")
-
-
-def read_input(filename: str) -> List[Any]:
-
-    return [eval(line.strip()) for line in open(filename)]
+re_number = re.compile("(\d+)")
 
 
-def part_one(filename: str) -> int:
-
-    testinput = read_input(filename)
-
-    return 0
-
-
-def add(left: str, right: str) -> str:
+def add_snail(left: str, right: str) -> str:
 
     return "[" + left + "," + right + "]"
 
 
 def sum_snail(input: List[str]) -> str:
 
-    gen = iter(input)
-    a = next(gen)
-    for b in gen:
-        a = add(a, b)
-        a = reduce_loop(a)
-
-    return a
+    return reduce(lambda x, y: reduce_loop(add_snail(x, y)), input)
 
 
-def add_right(num: str, val: int):
-    start = None
-    i = 0
-    while i < len(num):
-        if num[i].isdigit():
-            start = i
-            break
-        i += 1
+def add_right(num: str, val: int) -> str:
 
-    if not start:
-        return num
+    if m := re_number.search(num):
 
-    end = start + 1
-    while i < len(num):
-        if not num[i].isdigit():
-            end = i
-            break
-        i += 1
+        start = m.start()
+        end = m.end()
 
-    left = num[:start]
-    right = num[end:]
-    middle = str(int(num[start:end]) + val)
+        return num[:start] + str(int(num[start:end]) + val) + num[end:]
 
-    return left + middle + right
+    return num
 
 
 def add_left(num: str, val: int):
-    end = None
-    i = len(num) - 1
-    while i >= 0:
-        if num[i].isdigit():
-            end = i + 1
-            break
-        i -= 1
+    if m := re_number.search(num[::-1]):
 
-    if not end:
-        return num
+        end = len(num) - m.start()
+        start = len(num) - m.end()
 
-    start = end - 1
-    while i >= 0:
-        if num[i].isdigit():
-            start = i
-        else:
-            break
-        i -= 1
+        return num[:start] + str(int(num[start:end]) + val) + num[end:]
 
-    left = num[:start]
-    right = num[end:]
-    middle = str(int(num[start:end]) + val)
-
-    return left + middle + right
+    return num
 
 
 def explode(num: str, pos: int, left: str, right: str) -> str:
-    length = len(left) + len(right) + 3
-    i = pos - 1
-    leftside = add_left(num[:pos], int(left))
-    rightside = add_right(num[pos + length :], int(right))
-    return leftside + "0" + rightside
+    return (
+        add_left(num[:pos], int(left))
+        + "0"
+        + add_right(num[pos + len(left) + len(right) + 3 :], int(right))
+    )
 
 
-re_number = re.compile("(\d+)")
-
-
-def pull_value(num: str, pos: int):
+def pull_value(num: str, pos: int) -> Tuple[str, str, int]:
     if m := re_number.match(num[pos:]):
-        left = num[:pos]
-        right = num[pos + len(m.group(1)) :]
-        val = int(m.group(1))
+        return num[:pos], num[pos + len(m.group(1)) :], int(m.group(1))
 
-        return left, right, val
+    raise Exception("Should never happen")
 
 
 def split(num: str, pos: int) -> str:
@@ -125,35 +72,30 @@ def reduce_step(num: str) -> Tuple[bool, str]:
         elif num[i] == "]":
             depth -= 1
 
-        if depth > 4 and num[i + 1] in "01234567890":
-            m = re_pair.match(num[i:])
-            if m:
-                left = m.group(1)
-                right = m.group(2)
-                return True, explode(num, i, left, right)
+        if depth > 4 and (m := re_pair.match(num[i:])):
+            return True, explode(num, i, m.group(1), m.group(2))
 
     for i in range(len(num)):
-        if num[i] in "01234567890" and num[i + 1] in "01234567890":
+        if num[i].isdigit() and num[i + 1].isdigit():
             return True, split(num, i)
 
     return False, num
 
 
 def reduce_loop(num: str) -> str:
-    while True:
+
+    result = True
+    while result:
         result, num = reduce_step(num)
-        if not result:
-            return num
+
+    return num
 
 
-def test_explode(src: str, target: str, pos: int):
-    val = explode(src, pos)
-    assert val == target, f"{val} vs {target}"
+def magnitude(data: Union[int, List[Any]]) -> int:
 
-
-def test_split(src: str, target: str, pos: int):
-    val = split(src, pos)
-    assert val == target, f"{val} vs {target}"
+    return (
+        data if type(data) == int else magnitude(data[0]) * 3 + magnitude(data[1]) * 2
+    )
 
 
 def test_reduce_step(src: str, target: str):
@@ -161,19 +103,11 @@ def test_reduce_step(src: str, target: str):
     assert val == target, f"{val} vs {target}"
 
 
-def magnitude(data: Union[int, List[Any]]) -> int:
-
-    if type(data) == int:
-        return data
-    else:
-        return magnitude(data[0]) * 3 + magnitude(data[1]) * 2
-
-
 def run_tests() -> None:
-    val = add("[1,2]", "[[3,4],5]")
+    val: Any = add_snail("[1,2]", "[[3,4],5]")
     assert val == "[[1,2],[[3,4],5]]"
 
-    val = reduce_loop(add("[[[[4,3],4],4],[7,[[8,4],9]]]", "[1,1]"))
+    val = reduce_loop(add_snail("[[[[4,3],4],4],[7,[[8,4],9]]]", "[1,1]"))
     assert val == "[[[[0,7],4],[[7,8],[6,0]]],[8,1]]", val
 
     val = sum_snail([f"[{i+1},{i+1}]" for i in range(4)])
@@ -240,13 +174,9 @@ def part_one(input: List[str]) -> int:
 
 def pairwise_sum_magnitudes(input: List[str]) -> Generator[int, None, None]:
     for i in range(len(input)):
-        for j in range(len(input)):
-            if i != j:
-                val = sum_snail([input[i], input[j]])
-                yield magnitude(eval(val))
-                val = sum_snail([input[j], input[i]])
-                mag = magnitude(eval(val))
-                yield mag
+        for j in range(i + 1, len(input)):
+            yield magnitude(eval(sum_snail([input[i], input[j]])))
+            yield magnitude(eval(sum_snail([input[j], input[i]])))
 
 
 def part_two(input: List[str]) -> int:
