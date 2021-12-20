@@ -54,16 +54,10 @@ def pixel_on(spots: Image, x: int, y: int, mapping):
 def one_step(spots: Image, mapping: str, steps: int) -> Image:
 
     (minx, maxx), (miny, maxy) = map_range(spots)
-    if mapping[0] == "#":
-        minx -= steps * 2 - 1
-        miny -= steps * 2 - 1
-        maxx += steps * 2 - 1
-        maxy += steps * 2 - 1
-    else:
-        minx -= 1
-        miny -= 1
-        maxx += 1
-        maxy += 1
+    minx -= 3
+    miny -= 3
+    maxx += 3
+    maxy += 3
 
     newspots = set()
 
@@ -92,12 +86,14 @@ def do_steps(filename: str, steps) -> int:
 
         if i % 2 == 1:
 
+            # hacky.   Discard the border region if there is one to handle the oscilating
+            # border if the empty rule is for "#"
             if mapping[0] == "#":
                 (minx, maxx), (miny, maxy) = map_range(spots)
-                minx += steps * 2
-                miny += steps * 2
-                maxx -= steps * 2
-                maxy -= steps * 2
+                minx += 4
+                miny += 4
+                maxx -= 4
+                maxy -= 4
 
                 newspots = set()
                 for y in range(miny, maxy + 1):
@@ -105,7 +101,7 @@ def do_steps(filename: str, steps) -> int:
                         if (x, y) in spots:
                             newspots.add((x, y))
                 spots = newspots
-    # print_map(spots)
+
     return len(spots)
 
 
