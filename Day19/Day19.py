@@ -121,11 +121,19 @@ def get_scanner_position(scanner0, scanner0_contents, scanner1_contents):
         for beacon in scanner1_contents[0]:
             x = len([dist for dist in beacon.distances if dist in beacon1.distances])
 
+            # multiple common distances mean these are both the same beacon
             if x > 1:
+                # create vectors for one of the edges between this beacon and another one
                 vec1 = subtract(beacon1.pos, beacon1.distances[common_distance].pos)
                 vec2 = subtract(beacon.pos, beacon.distances[common_distance].pos)
+
+                # Use that to create a scanner with a transformed coordinate space
                 scanner = Scanner(beacon.pos, vec1, vec2)
+
+                # transform the beacon we just found into the common coordinate space
                 bpos = scanner.transform(beacon.pos)
+
+                # subtract off it's old positon, giving us the scanner position
                 diffpos = subtract(beacon1.pos, bpos)
                 scanner.set_position(diffpos)
                 return scanner
