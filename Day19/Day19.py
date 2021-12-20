@@ -62,6 +62,9 @@ class Scanner:
             self.signs[2] * vec[self.indices[2]],
         )
 
+    def __repr__(self):
+        return f"Scanner at {self.pos}"
+
 
 def subtract(a: Tuple[int, int, int], b: Tuple[int, int, int]) -> Tuple[int, int, int]:
 
@@ -124,7 +127,6 @@ def get_scanner_position(scanner0, scanner0_contents, scanner1_contents):
                 scanner1 = Scanner(beacon.pos, vec1, vec2)
                 bpos = scanner1.transform(beacon.pos)
                 diffpos = subtract(beacon1.pos, bpos)
-                # spos = add(scanner0.pos, diffpos)
                 scanner1.set_position(diffpos)
                 return scanner1
 
@@ -133,7 +135,6 @@ def get_scanner_position(scanner0, scanner0_contents, scanner1_contents):
 
 def merge_scanner(scanner1, scanner1_contents, knownbeacons):
 
-    n = 0
     newbeacons = []
     for beacon in scanner1_contents[0]:
         pos = add(scanner1.pos, scanner1.transform(beacon.pos))
@@ -155,23 +156,21 @@ def calc_stuff(filename: str):
         get_scanner_contents(scanner_input[i]) for i in range(len(scanner_input))
     ]
 
-    knownbeacons = {}
-    for beacon in scanner_contents[0][0]:
-        knownbeacons[beacon.pos] = beacon
+    knownbeacons = {beacon.pos: beacon for beacon in scanner_contents[0][0]}
 
     scanners = {0: Scanner()}
     while len(scanners) < len(scanner_contents):
         for i in range(1, len(scanner_contents)):
-            for j in scanners.keys():
-                scanner1 = get_scanner_position(
-                    scanners[j], scanner_contents[j], scanner_contents[i]
-                )
-                if scanner1:
-                    scanner_contents[i] = merge_scanner(
-                        scanner1, scanner_contents[i], knownbeacons
-                    )
-                    scanners[i] = scanner1
-                    break
+            if i not in scanners:
+                for j in scanners.keys():
+                    if scanner1 := get_scanner_position(
+                        scanners[j], scanner_contents[j], scanner_contents[i]
+                    ):
+                        scanner_contents[i] = merge_scanner(
+                            scanner1, scanner_contents[i], knownbeacons
+                        )
+                        scanners[i] = scanner1
+                        break
 
     return scanners, knownbeacons
 
@@ -181,17 +180,16 @@ def part_one(knownbeacons) -> int:
     return len(knownbeacons)
 
 
-def part_two(scanners) -> int:
-
-    mx = 0
+def pairwise_manhattan_distances(scanners):
     for s1 in scanners:
         for s2 in scanners:
             if s1 != s2:
-                m = man_distance(scanners[s1].pos, scanners[s2].pos)
-                if m > mx:
-                    mx = m
+                yield man_distance(scanners[s1].pos, scanners[s2].pos)
 
-    return mx
+
+def part_two(scanners) -> int:
+
+    return max(dist for dist in pairwise_manhattan_distances(scanners))
 
 
 if __name__ == "__main__":
