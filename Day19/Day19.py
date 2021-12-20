@@ -35,25 +35,6 @@ def man_distance(b1: Tuple[int, int, int], b2: Tuple[int, int, int]) -> int:
     return abs(x1 - x2) + abs(y1 - y2) + abs(z1 - z2)
 
 
-class Beacon:
-    def __init__(self, scanner, pos):
-
-        self.scanners = {}
-        self.beacons = {}
-        self.position = pos
-        self.home_scanner = scanner
-
-    def add_beacon(self, beacon):
-        if beacon.home_scanner == self.home_scanner:
-            self.beacons[distance(beacon.position, self.position)] = (beacon,)
-
-    def add_scanner(self, scanner, pos):
-        self.scanners[scanner] = pos
-
-    def get_distances(self):
-        return [d for d in self.beacons.keys()]
-
-
 class Scanner:
     def __init__(self, pos=None, vec1=None, vec2=None):
         self.pos = None
@@ -92,23 +73,13 @@ def add(a: Tuple[int, int, int], b: Tuple[int, int, int]) -> Tuple[int, int, int
     return (a[0] + b[0], a[1] + b[1], a[2] + b[2])
 
 
-def make_distance_table(beacons: List[Beacon]) -> List[List[float]]:
-    return [
-        [
-            distance(beacons[i].position, beacons[j].position)
-            for j in range(len(beacons))
-        ]
-        for i in range(len(beacons))
-    ]
-
-
 class Beacon:
     def __init__(self, num, pos):
         self.num = num
         self.pos = pos
         self.distances = {}
 
-    def add_distance(self, distance: float, beacon: Beacon):
+    def add_distance(self, distance: float, beacon):
         self.distances[distance] = beacon
 
     def __repr__(self):
@@ -210,6 +181,19 @@ def part_one(knownbeacons) -> int:
     return len(knownbeacons)
 
 
+def part_two(scanners) -> int:
+
+    mx = 0
+    for s1 in scanners:
+        for s2 in scanners:
+            if s1 != s2:
+                m = man_distance(scanners[s1].pos, scanners[s2].pos)
+                if m > mx:
+                    mx = m
+
+    return mx
+
+
 if __name__ == "__main__":
     testinput = calc_stuff("Day19/Day19TestInput.txt")
     realinput = calc_stuff("Day19/Day19Input.txt")
@@ -219,5 +203,5 @@ if __name__ == "__main__":
     print(f"Realinput value is {part_one(realinput[1])}")
 
     print("B:")
-    # print(f"Testinput value is {part_two('Day19/Day19TestInput.txt')}")
-    # print(f"Realinput value is {part_two('Day19/Day19Input.txt')}")
+    print(f"Testinput value is {part_two(testinput[0])}")
+    print(f"Realinput value is {part_two(realinput[0])}")
