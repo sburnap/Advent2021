@@ -1,6 +1,6 @@
 from enum import unique
 from typing import Tuple, List
-from math import sqrt
+from math import dist, sqrt
 import re
 
 
@@ -65,6 +65,7 @@ class Scanner:
                 self.indices.append([abs(j) for j in vec2].index(abs(vec1[i])))
             for i in range(3):
                 self.signs.append(vec1[i] // vec2[self.indices[i]])
+
         else:
             self.indices = [0, 1, 2]
             self.signs = [1, 1, 1]
@@ -91,99 +92,132 @@ def add(a: Tuple[int, int, int], b: Tuple[int, int, int]) -> Tuple[int, int, int
     return (a[0] + b[0], a[1] + b[1], a[2] + b[2])
 
 
-def make_data(scanners) -> List[Beacon]:
-    beacons: List[Beacon] = []
-
-    for s in range(len(scanners)):
-        for i in range(len(scanners[s])):
-            beacon = Beacon(s, scanners[s][i])
-
-            for j in range(len(beacons)):
-                beacons[j].add_beacon(beacon)
-                beacon.add_beacon(beacons[j])
-
-            beacons.append(beacon)
-
-    scanner_dict = {0: Scanner()}
-
-    unique_beacons: Beacon = []
-    for b1 in beacons:
-        is_unique = True
-        for b2 in unique_beacons:
-            if b1.home_scanner != b2.home_scanner:
-                dist1 = set(b1.get_distances())
-                dist2 = set(b2.get_distances())
-
-                common = dist1.intersection(dist2)
-                if len(common) > 1:
-                    is_unique = False
-                    b2.add_scanner(b1.home_scanner, b1.position)
-                    if (
-                        b2.home_scanner in scanner_dict.keys()
-                        and b1.home_scanner not in scanner_dict.keys()
-                    ):
-                        one = next(iter(common))
-
-                        b1_other = b1.beacons[one]
-                        b2_other = b2.beacons[one]
-                        vec1 = subtract(
-                            b1_other[0].position, b1_other[0].beacons[one][0].position
-                        )
-                        vec2 = subtract(
-                            b2_other[0].position, b2_other[0].beacons[one][0].position
-                        )
-                        scanner_dict[b1.home_scanner] = Scanner(
-                            b2_other[0].position,
-                            vec1,
-                            vec2,
-                        )
-
-        if is_unique:
-            unique_beacons.append(b1)
-
-    return unique_beacons, scanner_dict
+def make_distance_table(beacons: List[Beacon]) -> List[List[float]]:
+    return [
+        [
+            distance(beacons[i].position, beacons[j].position)
+            for j in range(len(beacons))
+        ]
+        for i in range(len(beacons))
+    ]
 
 
-def part_one(filename: str) -> int:
-    scanners = read_input(filename)
+class Beacon:
+    def __init__(self, num, pos):
+        self.num = num
+        self.pos = pos
+        self.distances = {}
 
-    data, _ = make_data(scanners)
-    return len(data)
+    def add_distance(self, distance: float, beacon: Beacon):
+        self.distances[distance] = beacon
+
+    def __repr__(self):
+        return f"Beacon {self.num} at {self.pos}"
 
 
-def part_two(filename: str) -> int:
+def make_beacon_distances(beacon_list):
+    beacon_distances = {}
+    for b1 in beacon_list:
+        for b2 in beacon_list:
+            if b1 != b2:
+                dist = distance(b1.pos, b2.pos)
+                if dist not in beacon_distances:
+                    beacon_distances[dist] = []
 
-    scanners = read_input(filename)
+                beacon_distances[dist].append((b1, b2))
+                b1.add_distance(dist, b2)
+                b2.add_distance(dist, b1)
 
-    unique_beacons, scanner_dict = make_data(scanners)
+    return beacon_distances
 
-    for s in range(len(scanners)):
-        if not scanner_dict[s].pos:
-            for b1 in unique_beacons:
-                if s in b1.scanners:
-                    s2_beacon_pos = b1.scanners[s]
-                    t_pos = scanner_dict[s].transform(s2_beacon_pos)
-                    s_pos = subtract(b1.position, t_pos)
-                    s_pos = add(s_pos, scanner_dict[b1.home_scanner].pos)
-                    scanner_dict[s].set_position(s_pos)
-                    print("Figure Out this")
+
+def get_scanner_contents(scanner_def):
+    beacon_list = [Beacon(i, pos) for i, pos in enumerate(scanner_def)]
+
+    return (beacon_list, make_beacon_distances(beacon_list))
+
+
+def get_scanner_position(scanner0, scanner0_contents, scanner1_contents):
+    common_distances = set(scanner0_contents[1].keys()).intersection(
+        set(scanner1_contents[1].keys())
+    )
+    for common_distance in common_distances:
+        beacon1 = scanner0_contents[1][common_distance][0][0]
+
+        for beacon in scanner1_contents[0]:
+            x = len([dist for dist in beacon.distances if dist in beacon1.distances])
+
+            if x > 1:
+                vec1 = subtract(beacon1.pos, beacon1.distances[common_distance].pos)
+                vec2 = subtract(beacon.pos, beacon.distances[common_distance].pos)
+                scanner1 = Scanner(beacon.pos, vec1, vec2)
+                bpos = scanner1.transform(beacon.pos)
+                diffpos = subtract(beacon1.pos, bpos)
+                # spos = add(scanner0.pos, diffpos)
+                scanner1.set_position(diffpos)
+                return scanner1
+
+    return None
+
+
+def merge_scanner(scanner1, scanner1_contents, knownbeacons):
+
+    n = 0
+    newbeacons = []
+    for beacon in scanner1_contents[0]:
+        pos = add(scanner1.pos, scanner1.transform(beacon.pos))
+
+        try:
+            newbeacons.append(knownbeacons[pos])
+        except:
+            beacon.pos = pos
+            newbeacons.append(beacon)
+            knownbeacons[pos] = beacon
+
+    return (newbeacons, scanner1_contents[1])
+
+
+def calc_stuff(filename: str):
+    scanner_input = read_input(filename)
+
+    scanner_contents = [
+        get_scanner_contents(scanner_input[i]) for i in range(len(scanner_input))
+    ]
+
+    knownbeacons = {}
+    for beacon in scanner_contents[0][0]:
+        knownbeacons[beacon.pos] = beacon
+
+    scanners = {0: Scanner()}
+    while len(scanners) < len(scanner_contents):
+        for i in range(1, len(scanner_contents)):
+            for j in scanners.keys():
+                scanner1 = get_scanner_position(
+                    scanners[j], scanner_contents[j], scanner_contents[i]
+                )
+                if scanner1:
+                    scanner_contents[i] = merge_scanner(
+                        scanner1, scanner_contents[i], knownbeacons
+                    )
+                    scanners[i] = scanner1
                     break
 
-    mx = 0
-    for s1 in scanner_dict:
-        for s2 in scanner_dict:
-            if s1 != s2:
-                m = man_distance(scanner_dict[s1].pos, scanner_dict[s2].pos)
-                if m > mx:
-                    mx = m
-    return mx
+    return scanners, knownbeacons
+
+
+def part_one(knownbeacons) -> int:
+
+    return len(knownbeacons)
 
 
 if __name__ == "__main__":
+    testinput = calc_stuff("Day19/Day19TestInput.txt")
+    realinput = calc_stuff("Day19/Day19Input.txt")
+
     print("A:")
-    print(f"Testinput value is {part_one('Day19/Day19TestInput.txt')}")
-    print(f"Realinput value is {part_one('Day19/Day19Input.txt')}")
+    print(f"Testinput value is {part_one(testinput[1])}")
+    print(f"Realinput value is {part_one(realinput[1])}")
 
     print("B:")
-    print(f"Testinput value is {part_two('Day19/Day19TestInput.txt')}")
-    print(f"Realinput value is {part_two('Day19/Day19Input.txt')}")
+    # print(f"Testinput value is {part_two('Day19/Day19TestInput.txt')}")
+    # print(f"Realinput value is {part_two('Day19/Day19Input.txt')}")
