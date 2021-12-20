@@ -124,11 +124,11 @@ def get_scanner_position(scanner0, scanner0_contents, scanner1_contents):
             if x > 1:
                 vec1 = subtract(beacon1.pos, beacon1.distances[common_distance].pos)
                 vec2 = subtract(beacon.pos, beacon.distances[common_distance].pos)
-                scanner1 = Scanner(beacon.pos, vec1, vec2)
-                bpos = scanner1.transform(beacon.pos)
+                scanner = Scanner(beacon.pos, vec1, vec2)
+                bpos = scanner.transform(beacon.pos)
                 diffpos = subtract(beacon1.pos, bpos)
-                scanner1.set_position(diffpos)
-                return scanner1
+                scanner.set_position(diffpos)
+                return scanner
 
     return None
 
@@ -163,13 +163,13 @@ def calc_stuff(filename: str):
         for i in range(1, len(scanner_contents)):
             if i not in scanners:
                 for j in scanners.keys():
-                    if scanner1 := get_scanner_position(
+                    if scanner := get_scanner_position(
                         scanners[j], scanner_contents[j], scanner_contents[i]
                     ):
                         scanner_contents[i] = merge_scanner(
-                            scanner1, scanner_contents[i], knownbeacons
+                            scanner, scanner_contents[i], knownbeacons
                         )
-                        scanners[i] = scanner1
+                        scanners[i] = scanner
                         break
 
     return scanners, knownbeacons
